@@ -77,12 +77,6 @@ class NetworkMonitor(QMainWindow):
         self.toolbar.addSeparator()
         self.toolbar.addAction("Save") 
     
-    def _createDataBox(self):
-        self.treeWidget = QtGui.QTreeWidget(self.splitter)
-        self.treeWidget.setMinimumSize(QtCore.QSize(0, 0))
-        self.treeWidget.setObjectName(_fromUtf8("treeView"))
-        self.treeWidget.setColumnCount(1)
-        self.treeWidget.setHeaderHidden(True)
     def packetSniff(self):
         if self.interfaceSelected == None:
             self.interfaceDialog()
