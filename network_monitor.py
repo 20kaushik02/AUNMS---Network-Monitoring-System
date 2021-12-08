@@ -42,12 +42,8 @@ class NetworkMonitor(QMainWindow):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tableWidget.sizePolicy().hasHeightForWidth())
         self.tableWidget.setSizePolicy(sizePolicy)
-        
-        self.treeWidget = QTreeWidget()
-        self.treeWidget.setMinimumSize(QSize(0, 0))
-        self.treeWidget.setColumnCount(1)
-        self.treeWidget.setHeaderHidden(True)
-        
+        self.setCentralWidget(self.tableWidget)
+   
     def _createToolBar(self):
         self.toolbar = QToolBar(self)
         self.addToolBar(self.toolbar)
