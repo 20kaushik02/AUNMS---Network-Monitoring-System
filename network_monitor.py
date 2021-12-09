@@ -1,4 +1,3 @@
-import sys
 from PyQt5.QtGui     import *
 from PyQt5.QtCore    import *
 from PyQt5.QtWidgets import *
@@ -108,7 +107,6 @@ class NetworkMonitor(QMainWindow):
         
     def packetClear(self):
         self.actionStart.setEnabled(False)
-        self.actionStop.setEnabled(True)
         self.actionStop.setEnabled(True)
         
         self.thread.terminate()
