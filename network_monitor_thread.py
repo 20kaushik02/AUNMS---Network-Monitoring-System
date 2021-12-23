@@ -1,8 +1,11 @@
 import sys
-from PyQt5.QtGui     import *
-from PyQt5.QtCore    import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from scapy.all import *
+from scapy.layers.inet import *
+from scapy.layers.l2 import *
+
 
 class NetworkMonitorThread(QObject):
     def __init__(self, interface, parent=None):
@@ -10,19 +13,20 @@ class NetworkMonitorThread(QObject):
         self.interface = interface
         self.packetList = []
         self.end = False
-        
+
     quitBool = pyqtSignal(int)
+
     def endSniff(self):
         QApplication.processEvents()
         print("Ending")
         self.end = True
         self.quitBool.emit(1)
-    
+
     def sniffStatus(self):
         QApplication.processEvents()
         return self.end
-    
-    def getLayers(self,packet):
+
+    def getLayers(self, packet):
         QApplication.processEvents()
         layers = []
         counter = 0
@@ -35,9 +39,10 @@ class NetworkMonitorThread(QObject):
                 break
             counter += 1
         return layers
-    
+
     packetData = pyqtSignal(tuple)
-    def handlePacket(self,packet):
+
+    def handlePacket(self, packet):
         self.packetList.append(packet)
         QApplication.processEvents()
         tableViewPart = dict()
@@ -50,9 +55,9 @@ class NetworkMonitorThread(QObject):
             tableViewPart['destination'] = packet.dst
         tableViewPart['length'] = len(packet)
         tableViewPart['layers'] = self.getLayers(packet)
-        
+
         QApplication.processEvents()
-        (protocol,info) = self.getInfo(packet)
+        (protocol, info) = self.getInfo(packet)
         tableViewPart['info'] = info
         if protocol:
             tableViewPart['Protocol'] = protocol
@@ -62,17 +67,19 @@ class NetworkMonitorThread(QObject):
             tableViewPart['Protocol'] = "Other"
         QApplication.processEvents()
         self.packetData.emit((packet, tableViewPart))
-        
-    def getInfo(self,packet):
+
+    def getInfo(self, packet):
         QApplication.processEvents()
         info = ""
         protocol = ""
         if UDP in packet:
             protocol = "UDP"
-            info = "{} -> {} len={} chksum={}".format(packet[UDP].sport,
-                                                      packet[UDP].dport,
-                                                      packet[UDP].len,
-                                                      packet[UDP].chksum)
+            info = "{} -> {} len={} chksum={}".format(
+                packet[UDP].sport,
+                packet[UDP].dport,
+                packet[UDP].len,
+                packet[UDP].chksum
+            )
         elif TCP in packet:
             flags = {
                 'F': 'FIN',
@@ -84,26 +91,35 @@ class NetworkMonitorThread(QObject):
                 'E': 'ECE',
                 'C': 'CWR',
             }
-            
+
             flgs = str([flags[x] for x in packet.sprintf('%TCP.flags%')])
             protocol = "TCP"
-            info = "{} -> {} {} seq={} ack={} window={}".format(packet[TCP].sport,
-                                                                packet[TCP].dport,
-                                                                flgs,
-                                                                packet[TCP].seq,
-                                                                packet[TCP].ack,
-                                                                packet[TCP].window)
+            info = "{} -> {} {} seq={} ack={} window={}".format(
+                packet[TCP].sport,
+                packet[TCP].dport,
+                flgs,
+                packet[TCP].seq,
+                packet[TCP].ack,
+                packet[TCP].window
+            )
+
         elif ARP in packet:
             protocol = "ARP"
-            info = "hwtype={} ptype={} hwlen={} plen={} op={}".format(packet[ARP].hwtype,
-                                                                      packet[ARP].ptype,
-                                                                      packet[ARP].hwlen,
-                                                                      packet[ARP].plen,
-                                                                      packet[ARP].op)
+            info = "hwtype={} ptype={} hwlen={} plen={} op={}".format(
+                packet[ARP].hwtype,
+                packet[ARP].ptype,
+                packet[ARP].hwlen,
+                packet[ARP].plen,
+                packet[ARP].op
+            )
         QApplication.processEvents()
-        return (protocol,info)
-    
-    
+        return (protocol, info)
+
     def startSniff(self):
         QApplication.processEvents()
-        self.pkts = sniff(count=0, iface=self.interface, prn=self.handlePacket, stop_filter=lambda x: self.sniffStatus())
+        self.pkts = sniff(
+            count=0,
+            iface=self.interface,
+            prn=self.handlePacket,
+            stop_filter={lambda x: self.sniffStatus()}
+        )
