@@ -106,13 +106,14 @@ class NetworkMonitor(QMainWindow):
             self.thread.terminate()
         
     def packetClear(self):
-        self.actionStart.setEnabled(False)
-        self.actionStop.setEnabled(True)
+        
+        #self.actionStart.setEnabled(False)
+        #self.actionStop.setEnabled(True)
         
         self.thread.terminate()
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
-        self.thread.start()
+        #sself.thread.start()
     
     def interfaceDialog(self):
         self.interfaceDiag = InterfacePick() 
@@ -134,6 +135,20 @@ class NetworkMonitor(QMainWindow):
         self.tableWidget.setItem(rowpos, 5, QTableWidgetItem(str(tableData['length'])))
         self.tableWidget.setItem(rowpos, 6, QTableWidgetItem(tableData['info']))
         
+        if(tableData['Protocol'] == 'TCP'):
+            self.setColortoRow(self.tableWidget, rowpos, QColor(173,191, 255))
+        elif(tableData['Protocol'] == 'UDP'):
+            self.setColortoRow(self.tableWidget, rowpos, QColor(157,240,255))
+        elif(tableData['Protocol'] == 'Other'):
+            self.setColortoRow(self.tableWidget, rowpos, QColor(125,125,146))
+        elif(tableData['Protocol'] == 'ARP'):
+            self.setColortoRow(self.tableWidget, rowpos, QColor(157,240,77))
+
+    
+    def setColortoRow(self, table, rowIndex, color):
+        for j in range(table.columnCount()):
+            table.item(rowIndex, j).setBackground(color)
+            
 class InterfacePick(QDialog):
     def __init__(self, parent=None):
         super().__init__()

@@ -16,7 +16,7 @@ class TraceRoute(QWidget):
         self.startTraceBtn.clicked.connect(self.startTrace)
         
         self.result = QTextEdit()
-        self.result.setEnabled(False)
+        self.result.setReadOnly(True)
         
         self.layoutTrace = QVBoxLayout(self)
         self.layoutTrace.addWidget(self.hostn)
