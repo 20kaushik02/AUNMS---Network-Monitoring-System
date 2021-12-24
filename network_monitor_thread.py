@@ -1,4 +1,3 @@
-import sys
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -32,8 +31,8 @@ class NetworkMonitorThread(QObject):
         counter = 0
         while True:
             layer = packet.getlayer(counter)
-            if layer != None:
-                if layer.name != "Padding":
+            if layer is not None:
+                if layer.name is not "Padding":
                     layers.append(layer.name)
             else:
                 break
@@ -102,7 +101,13 @@ class NetworkMonitorThread(QObject):
                 packet[TCP].ack,
                 packet[TCP].window
             )
-
+        elif ICMP in packet:
+            protocol = "ICMP"
+            info = "type={} code={} chksum={}".format(
+                packet[ICMP].type,
+                packet[ICMP].code,
+                packet[ICMP].chksum,
+            )
         elif ARP in packet:
             protocol = "ARP"
             info = "hwtype={} ptype={} hwlen={} plen={} op={}".format(
@@ -121,5 +126,5 @@ class NetworkMonitorThread(QObject):
             count=0,
             iface=self.interface,
             prn=self.handlePacket,
-            stop_filter={lambda x: self.sniffStatus()}
+            stop_filter=lambda x: self.sniffStatus()
         )

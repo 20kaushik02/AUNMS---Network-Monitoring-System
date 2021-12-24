@@ -32,12 +32,20 @@ class TraceRoute(QWidget):
                 result, unans = traceroute(
                     target=self.host.text(), dport=80, verbose=0)
                 output = []
-                output.append("\tRoute path\tResponse time")
+                output.append("\tRoute path\t\tResponse time")
+                result = sorted(result, key=lambda x: x[0].ttl)
+
                 for snd, rcv in result:
                     output.append(
-                        str(f"{snd.ttl}\t{rcv.src}\t\t{(int((rcv.time - snd.sent_time)*1000))} ms"))
-                output.append(f"\nUnanswered packets: {len(unans)}")
+                        str("{}\t{}\t\t{} ms".format(
+                            snd.ttl,
+                            rcv.src,
+                            (int((rcv.time - snd.sent_time)*1000))
+                        )))
+                output.append("\nUnanswered packets: {}".format(
+                    len(unans)
+                ))
                 self.result.setText('\n'.join(output))
-            except socket.gaierror as e:
+            except socket.gaierror:
                 self.result.setText(
                     "Invalid address/Could not get address info")

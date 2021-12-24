@@ -76,7 +76,9 @@ class NetworkMonitor(QMainWindow):
         if self.interfaceSelected == None:
             self.interfaceDialog()
         
-        print(f"Monitoring - {self.interfaceSelected}")
+        print("Monitoring - {}".format(
+            self.interfaceSelected
+        ))
         
         self.actionStart.setEnabled(False)
         self.actionStop.setEnabled(True)
@@ -139,10 +141,12 @@ class NetworkMonitor(QMainWindow):
             self.setColortoRow(self.tableWidget, rowpos, QColor(173,191, 255))
         elif(tableData['Protocol'] == 'UDP'):
             self.setColortoRow(self.tableWidget, rowpos, QColor(157,240,255))
-        elif(tableData['Protocol'] == 'Other'):
-            self.setColortoRow(self.tableWidget, rowpos, QColor(125,125,146))
         elif(tableData['Protocol'] == 'ARP'):
             self.setColortoRow(self.tableWidget, rowpos, QColor(157,240,77))
+        elif(tableData['Protocol'] == 'ICMP'):
+            self.setColortoRow(self.tableWidget, rowpos, QColor(255, 182, 193))
+        elif(tableData['Protocol'] == 'Other'):
+            self.setColortoRow(self.tableWidget, rowpos, QColor(125,125,146))
 
     
     def setColortoRow(self, table, rowIndex, color):
