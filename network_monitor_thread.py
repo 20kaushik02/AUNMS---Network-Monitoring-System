@@ -64,6 +64,9 @@ class NetworkMonitorThread(QObject):
             tableViewPart['Protocol'] = "IP"
         else:
             tableViewPart['Protocol'] = "Other"
+            
+        
+        
         QApplication.processEvents()
         self.packetData.emit((packet, tableViewPart))
 

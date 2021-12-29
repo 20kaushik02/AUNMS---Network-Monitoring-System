@@ -99,48 +99,6 @@ class NetworkMonitor(QMainWindow):
             self.actionScroll.setText('Disable Auto Scroll')
         if (self.actionScroll.isChecked() == False):
             self.actionScroll.setText('Enable Auto Scroll')
-    
-    def _createToolBar(self):
-        self.toolbar = QToolBar(self)
-        self.addToolBar(self.toolbar)
-
-        self.toolbar.setStyleSheet('font-size: 9pt')
-        
-        self.actionStart = QAction('Start', self)
-        
-        self.actionStart.triggered.connect(self.packetSniff)
-        self.toolbar.addAction(self.actionStart)
-        
-        self.toolbar.addSeparator()
-        
-        self.actionStop = QAction('Stop', self)
-        self.toolbar.addAction(self.actionStop)
-        
-        self.toolbar.addSeparator()
-        
-        self.actionPickInterface = QAction('Choose Interface', self)
-        self.actionPickInterface.triggered.connect(self.interfaceDialog)
-        self.toolbar.addAction(self.actionPickInterface) 
-        
-        self.actionClear = QAction('Clear', self)
-        self.actionClear.triggered.connect(self.packetClear)
-        self.toolbar.addAction(self.actionClear) 
-        
-        self.toolbar.addSeparator()
-        
-        self.colorButton = QPushButton("Colors")
-        
-        saveMenu = QMenu()
-        saveMenu.addAction('Save as pcap ')
-        saveMenu.addAction('Save as CSV')
-        
-        self.colorButton.setMenu(saveMenu)
-        
-        self.toolbar.addWidget(self.colorButton)
-        
-        self.actionSave = QAction('Save', self)
-        self.actionSave.triggered.connect(self.savePackets)
-        self.toolbar.addAction(self.actionSave) 
         
     def packetSniff(self):
         if self.interfaceSelected == None:
