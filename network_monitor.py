@@ -80,9 +80,13 @@ class NetworkMonitor(QMainWindow):
         self.actionSavePCAP = QAction('Save as pcap', self)
         self.actionSavePCAP.triggered.connect(self.savePacketsPCAP)
         
+        self.actionSaveBLIP = QAction('Log Violations', self)
+        self.actionSaveBLIP.triggered.connect(self.savePacketsBLIP)
+        
         self.saveMenu = QMenu('Save', self)
         self.saveMenu.addAction(self.actionSaveCSV)
         self.saveMenu.addAction(self.actionSavePCAP)
+        self.saveMenu.addAction(self.actionSaveBLIP)
         self.menubar.addMenu(self.saveMenu)
         
         self.actionScroll = QAction('Disable Auto Scroll', self)
@@ -161,18 +165,7 @@ class NetworkMonitor(QMainWindow):
         self.tableWidget.setItem(rowpos, 5, QTableWidgetItem(str(tableData['length'])))
         self.tableWidget.setItem(rowpos, 6, QTableWidgetItem(tableData['info']))
         
-        if(tableData['Protocol'] == 'TCP'):
-            self.setColortoRow(self.tableWidget, rowpos, QColor(173,191, 255))
-        elif(tableData['Protocol'] == 'UDP'):
-            self.setColortoRow(self.tableWidget, rowpos, QColor(157,240,255))
-        elif(tableData['Protocol'] == 'ARP'):
-            self.setColortoRow(self.tableWidget, rowpos, QColor(157,240,77))
-        elif(tableData['Protocol'] == 'ICMP'):
-            self.setColortoRow(self.tableWidget, rowpos, QColor(255, 182, 193))
-        elif(tableData['Protocol'] == 'IP'):
-            self.setColortoRow(self.tableWidget, rowpos, QColor(160, 182, 193))
-        elif(tableData['Protocol'] == 'Other'):
-            self.setColortoRow(self.tableWidget, rowpos, QColor(125,125,146))
+        self.setColortoRow(self.tableWidget, rowpos, tableData['RowColor'])
         
         self.vbar = self.tableWidget.verticalScrollBar()
         self._scroll = self.vbar.value() == self.vbar.maximum()
@@ -186,10 +179,15 @@ class NetworkMonitor(QMainWindow):
             
     def savePacketsPCAP(self):
         path = QFileDialog.getSaveFileName(self, 'Save File', '', 'pcap(*.pcap)')
-        print(path[0][-4:])
         path = str(path[0])
         wrpcap(path, self.worker.packetList)
-
+    
+    def savePacketsBLIP(self):
+        path = QFileDialog.getSaveFileName(self, 'Save File', '', 'pcap(*.pcap)')
+        path = str(path[0])
+        wrpcap(path, self.worker.blackListAccess)
+        self.worker.blackListAccess = []
+    
     def savePacketsCSV(self):
         path = QFileDialog.getSaveFileName(self, 'Save File', '', 'CSV(*.csv)')
         with open(path[0], 'w') as stream:

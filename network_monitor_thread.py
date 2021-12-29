@@ -8,9 +8,13 @@ from scapy.layers.l2 import *
 
 class NetworkMonitorThread(QObject):
     def __init__(self, interface, parent=None):
+        
+        self.IP_blacklist = set(line.strip() for line in open('IP_Blacklist.txt'))
+        print(self.IP_blacklist)
         QObject.__init__(self, parent=parent)
         self.interface = interface
         self.packetList = []
+        self.blackListAccess = []
         self.end = False
 
     quitBool = pyqtSignal(int)
@@ -64,8 +68,22 @@ class NetworkMonitorThread(QObject):
             tableViewPart['Protocol'] = "IP"
         else:
             tableViewPart['Protocol'] = "Other"
-            
-        
+         
+        if(tableViewPart['source'] in self.IP_blacklist or tableViewPart['destination'] in self.IP_blacklist):
+            tableViewPart['RowColor'] = QColor(238, 75, 43)
+            self.blackListAccess.append(packet)
+        elif(tableViewPart['Protocol'] == 'TCP'):
+            tableViewPart['RowColor'] = QColor(173,191, 255)
+        elif(tableViewPart['Protocol'] == 'UDP'):
+            tableViewPart['RowColor'] = QColor(157,240,255)
+        elif(tableViewPart['Protocol'] == 'ARP'):
+            tableViewPart['RowColor'] = QColor(157,240,77)
+        elif(tableViewPart['Protocol'] == 'ICMP'):
+            tableViewPart['RowColor'] = QColor(255, 182, 193)
+        elif(tableViewPart['Protocol'] == 'IP'):
+            tableViewPart['RowColor'] = QColor(160, 182, 193)            
+        elif(tableViewPart['Protocol'] == 'Other'):
+            tableViewPart['RowColor'] = QColor(125,125,146)
         
         QApplication.processEvents()
         self.packetData.emit((packet, tableViewPart))
