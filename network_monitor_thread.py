@@ -10,7 +10,6 @@ class NetworkMonitorThread(QObject):
     def __init__(self, interface, parent=None):
         
         self.IP_blacklist = set(line.strip() for line in open('IP_Blacklist.txt'))
-        print(self.IP_blacklist)
         QObject.__init__(self, parent=parent)
         self.interface = interface
         self.packetList = []
@@ -21,7 +20,6 @@ class NetworkMonitorThread(QObject):
 
     def endSniff(self):
         QApplication.processEvents()
-        print("Ending")
         self.end = True
         self.quitBool.emit(1)
 

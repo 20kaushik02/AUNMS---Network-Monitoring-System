@@ -97,7 +97,6 @@ class NetworkMonitor(QMainWindow):
         self.menubar.addAction(self.actionScroll) 
         
     def autoScrollSet(self):
-        print(self.actionScroll.isChecked())
         if (self.actionScroll.isChecked() == True):
             self.tableWidget.scrollToBottom()
             self.actionScroll.setText('Disable Auto Scroll')
@@ -108,10 +107,6 @@ class NetworkMonitor(QMainWindow):
         if self.interfaceSelected == None:
             self.interfaceDialog()
         
-        print("Monitoring - {}".format(
-            self.interfaceSelected
-        ))
-        
         self.actionStart.setEnabled(False)
         self.actionStop.setEnabled(True)
         self.actionClear.setEnabled(True)
@@ -120,7 +115,7 @@ class NetworkMonitor(QMainWindow):
         self.thread = QThread()
         self.worker = NetworkMonitorThread(interface = self.interfaceSelected)
         self.worker.moveToThread(self.thread)
-        
+
         self.thread.started.connect(self.worker.startSniff)
         self.actionStop.triggered.connect(self.worker.endSniff)
         
@@ -130,18 +125,15 @@ class NetworkMonitor(QMainWindow):
     
     quitBool = pyqtSignal()
     def stopSniff(self, quitBool):
-        print(quitBool)
         if(quitBool == 1):
             self.thread.quit()
             self.actionStart.setEnabled(True)
             self.actionStop.setEnabled(False)
             self.actionPickInterface.setEnabled(True)
             
-            print("Terminating thread")
-            self.thread.quit()
-        
     def packetClear(self):
-        self.thread.terminate()
+        if hasattr(self.thread, 'quit'):
+            self.thread.quit()
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
     
@@ -150,7 +142,6 @@ class NetworkMonitor(QMainWindow):
         self.interfaceDiag.exec_()
         if hasattr(self.interfaceDiag, 'interfaceName'):
             self.interfaceSelected = self.interfaceDiag.interfaceName
-            print(self.interfaceSelected)
     
     packetData = pyqtSignal()
     def addPacketToTableWidget(self, packetData):
@@ -179,29 +170,32 @@ class NetworkMonitor(QMainWindow):
             
     def savePacketsPCAP(self):
         path = QFileDialog.getSaveFileName(self, 'Save File', '', 'pcap(*.pcap)')
-        path = str(path[0])
-        wrpcap(path, self.worker.packetList)
+        if path[0] is not '':
+            path = str(path[0])
+            wrpcap(path, self.worker.packetList)
     
     def savePacketsBLIP(self):
         path = QFileDialog.getSaveFileName(self, 'Save File', '', 'pcap(*.pcap)')
-        path = str(path[0])
-        wrpcap(path, self.worker.blackListAccess)
-        self.worker.blackListAccess = []
+        if path[0] is not '':
+            path = str(path[0])
+            wrpcap(path, self.worker.blackListAccess)
+            self.worker.blackListAccess = []
     
     def savePacketsCSV(self):
         path = QFileDialog.getSaveFileName(self, 'Save File', '', 'CSV(*.csv)')
-        with open(path[0], 'w') as stream:
-            writer = csv.writer(stream, lineterminator='\n')
-            for row in range(self.tableWidget.rowCount()):
-                rowdata = []
-                for column in range(self.tableWidget.columnCount()):
-                    item = self.tableWidget.item(row, column)
-                    if item is not None:
-                        rowdata.append(item.text())
-                    else:
-                        rowdata.append('')
+        if path[0] is not '':
+            with open(path[0], 'w') as stream:
+                writer = csv.writer(stream, lineterminator='\n')
+                for row in range(self.tableWidget.rowCount()):
+                    rowdata = []
+                    for column in range(self.tableWidget.columnCount()):
+                        item = self.tableWidget.item(row, column)
+                        if item is not None:
+                            rowdata.append(item.text())
+                        else:
+                            rowdata.append('')
 
-                writer.writerow(rowdata)
+                    writer.writerow(rowdata)
     
 class InterfacePick(QDialog):
     def __init__(self, parent=None):
