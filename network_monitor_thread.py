@@ -121,10 +121,13 @@ class NetworkMonitorThread(QObject):
         return (protocol, info)
 
     def startSniff(self):
-        QApplication.processEvents()
-        self.pkts = sniff(
-            count=0,
-            iface=self.interface,
-            prn=self.handlePacket,
-            stop_filter=lambda x: self.sniffStatus()
-        )
+        while(self.end == False):
+            QApplication.processEvents()
+            self.pkts = sniff(
+                count=0,
+                iface=self.interface,
+                prn=self.handlePacket,
+                timeout=2,
+                stop_filter=lambda x: self.sniffStatus()
+            )
+            QApplication.processEvents()

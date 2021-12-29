@@ -3,26 +3,29 @@ from PyQt5.QtCore    import *
 from PyQt5.QtWidgets import *
 from network_monitor_thread import NetworkMonitorThread
 from scapy.all import *
+import sys, csv
 
 class NetworkMonitor(QMainWindow):
     def __init__(self):
         super().__init__()
         self.interfaceSelected = None
-        
+        self.autoscroll = True
         self.layout = QVBoxLayout()
         
-        self._createToolBar()
+        self._createMenuBar()
         self._createTable()
         self.setLayout(self.layout)
     
     def _createTable(self):
         self.tableWidget = QTableWidget()
+        self.tableWidget.setStyleSheet('border-bottom: 1px solid #d6d9dc')
+        
         self.tableWidget.setTabKeyNavigation(False)
         self.tableWidget.setProperty("showDropIndicator", False)
         self.tableWidget.setDragDropOverwriteMode(False)
         self.tableWidget.setSelectionMode(QAbstractItemView.SingleSelection)
         self.tableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.tableWidget.setShowGrid(False)
+        self.tableWidget.setShowGrid(True)
         self.tableWidget.setGridStyle(Qt.NoPen)
         self.tableWidget.setRowCount(0)
         self.tableWidget.setColumnCount(7)
@@ -32,8 +35,9 @@ class NetworkMonitor(QMainWindow):
         self.tableWidget.horizontalHeader().setHighlightSections(False)
         self.tableWidget.horizontalHeader().setSortIndicatorShown(True)
         self.tableWidget.verticalHeader().setVisible(False)
-        self.tableWidget.setSortingEnabled(True)
+        self.tableWidget.setSortingEnabled(False)
         self.tableWidget.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.tableWidget.setAutoScroll(True)
         
         self.tableWidget.horizontalHeader(). setSectionResizeMode(6, QHeaderView.Stretch)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -43,6 +47,59 @@ class NetworkMonitor(QMainWindow):
         self.tableWidget.setSizePolicy(sizePolicy)
         self.setCentralWidget(self.tableWidget)
    
+    def _createMenuBar(self):
+        self.menubar = QMenuBar(self)
+        self.setMenuBar(self.menubar)
+        self.menubar.setStyleSheet('font-size: 11pt')
+        
+        self.actionStart = QAction('Start', self)
+        
+        self.actionStart.triggered.connect(self.packetSniff)
+        self.menubar.addAction(self.actionStart)
+        
+        self.menubar.addSeparator()
+        
+        self.actionStop = QAction('Stop', self)
+        self.menubar.addAction(self.actionStop)
+        
+        self.menubar.addSeparator()
+        
+        self.actionPickInterface = QAction('Choose Interface', self)
+        self.actionPickInterface.triggered.connect(self.interfaceDialog)
+        self.menubar.addAction(self.actionPickInterface) 
+        
+        self.actionClear = QAction('Clear', self)
+        self.actionClear.triggered.connect(self.packetClear)
+        self.menubar.addAction(self.actionClear) 
+        
+        self.menubar.addSeparator()
+        
+        self.actionSaveCSV = QAction('Save as CSV', self)
+        self.actionSaveCSV.triggered.connect(self.savePacketsCSV)
+        
+        self.actionSavePCAP = QAction('Save as pcap', self)
+        self.actionSavePCAP.triggered.connect(self.savePacketsPCAP)
+        
+        self.saveMenu = QMenu('Save', self)
+        self.saveMenu.addAction(self.actionSaveCSV)
+        self.saveMenu.addAction(self.actionSavePCAP)
+        self.menubar.addMenu(self.saveMenu)
+        
+        self.actionScroll = QAction('Disable Auto Scroll', self)
+        self.actionScroll.triggered.connect(self.autoScrollSet)
+        self.actionScroll.setCheckable(True)
+        self.actionScroll.setChecked(True)
+        
+        self.menubar.addAction(self.actionScroll) 
+        
+    def autoScrollSet(self):
+        print(self.actionScroll.isChecked())
+        if (self.actionScroll.isChecked() == True):
+            self.tableWidget.scrollToBottom()
+            self.actionScroll.setText('Disable Auto Scroll')
+        if (self.actionScroll.isChecked() == False):
+            self.actionScroll.setText('Enable Auto Scroll')
+    
     def _createToolBar(self):
         self.toolbar = QToolBar(self)
         self.addToolBar(self.toolbar)
@@ -70,8 +127,21 @@ class NetworkMonitor(QMainWindow):
         self.toolbar.addAction(self.actionClear) 
         
         self.toolbar.addSeparator()
-        self.toolbar.addAction("Save") 
-    
+        
+        self.colorButton = QPushButton("Colors")
+        
+        saveMenu = QMenu()
+        saveMenu.addAction('Save as pcap ')
+        saveMenu.addAction('Save as CSV')
+        
+        self.colorButton.setMenu(saveMenu)
+        
+        self.toolbar.addWidget(self.colorButton)
+        
+        self.actionSave = QAction('Save', self)
+        self.actionSave.triggered.connect(self.savePackets)
+        self.toolbar.addAction(self.actionSave) 
+        
     def packetSniff(self):
         if self.interfaceSelected == None:
             self.interfaceDialog()
@@ -100,22 +170,18 @@ class NetworkMonitor(QMainWindow):
     def stopSniff(self, quitBool):
         print(quitBool)
         if(quitBool == 1):
+            self.thread.quit()
             self.actionStart.setEnabled(True)
             self.actionStop.setEnabled(False)
             self.actionPickInterface.setEnabled(True)
             
             print("Terminating thread")
-            self.thread.terminate()
+            self.thread.quit()
         
     def packetClear(self):
-        
-        #self.actionStart.setEnabled(False)
-        #self.actionStop.setEnabled(True)
-        
         self.thread.terminate()
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
-        #sself.thread.start()
     
     def interfaceDialog(self):
         self.interfaceDiag = InterfacePick() 
@@ -145,14 +211,42 @@ class NetworkMonitor(QMainWindow):
             self.setColortoRow(self.tableWidget, rowpos, QColor(157,240,77))
         elif(tableData['Protocol'] == 'ICMP'):
             self.setColortoRow(self.tableWidget, rowpos, QColor(255, 182, 193))
+        elif(tableData['Protocol'] == 'IP'):
+            self.setColortoRow(self.tableWidget, rowpos, QColor(160, 182, 193))
         elif(tableData['Protocol'] == 'Other'):
             self.setColortoRow(self.tableWidget, rowpos, QColor(125,125,146))
-
-    
+        
+        self.vbar = self.tableWidget.verticalScrollBar()
+        self._scroll = self.vbar.value() == self.vbar.maximum()
+        
+        if self._scroll and self.actionScroll.isChecked():
+            self.tableWidget.scrollToBottom()
+        
     def setColortoRow(self, table, rowIndex, color):
         for j in range(table.columnCount()):
             table.item(rowIndex, j).setBackground(color)
             
+    def savePacketsPCAP(self):
+        path = QFileDialog.getSaveFileName(self, 'Save File', '', 'pcap(*.pcap)')
+        print(path[0][-4:])
+        path = str(path[0])
+        wrpcap(path, self.worker.packetList)
+
+    def savePacketsCSV(self):
+        path = QFileDialog.getSaveFileName(self, 'Save File', '', 'CSV(*.csv)')
+        with open(path[0], 'w') as stream:
+            writer = csv.writer(stream, lineterminator='\n')
+            for row in range(self.tableWidget.rowCount()):
+                rowdata = []
+                for column in range(self.tableWidget.columnCount()):
+                    item = self.tableWidget.item(row, column)
+                    if item is not None:
+                        rowdata.append(item.text())
+                    else:
+                        rowdata.append('')
+
+                writer.writerow(rowdata)
+    
 class InterfacePick(QDialog):
     def __init__(self, parent=None):
         super().__init__()
