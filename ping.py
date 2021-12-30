@@ -30,28 +30,27 @@ class Ping(QWidget):
         if(len(self.host.text()) >= 1):
             try:
                 packet = IP(dst=self.host.text())/ICMP()
-                output = sr1(packet, timeout=2)
-                if output is not None:
-                    res_type = icmptypes[output.type]
-                    res_code = ""
-                    if output.type in icmpcodes:
-                        res_code = " - "+icmpcodes[output.type][output.code]
-                    ping_time = int((output.time - packet.sent_time)*1000)
+                result = ""
+                
+                for i in range(1, 6):
+                    output = sr1(packet, timeout=3, verbose=0)
+                    if output is not None:
+                        res_type = icmptypes[output.type]
+                        res_code = ""
+                        if output.type in icmpcodes:
+                            res_code = " - "+icmpcodes[output.type][output.code]
+                        ping_time = int((output.time - packet.sent_time)*1000)
 
-                    self.result.setText(
-                        "Ping results:\nSummary: {}\n\nType:\t\t{}{}\nTime:\t\t{}ms\nSource:\t\t{}\nDestination:\t{}\
-                            \nTTL:\t\t{}".format(
-                                output.summary(),
-                                res_type,
-                                res_code,
-                                ping_time,
-                                packet[IP].src,
-                                packet[IP].dst,
-                                packet[IP].ttl
+                        result += "{}{} from {}:\ttime={}ms\tTTL={}\n".format(
+                            res_type,
+                            res_code,
+                            packet[IP].dst,
+                            ping_time,
+                            packet[IP].ttl
                         )
-                    )
-                else:
-                    self.result.setText("Request timed out.")
+                    else:
+                        result += "Request timed out.\n"
+                    self.result.setText(result)
             except socket.gaierror:
                 self.result.setText(
                     "Invalid address/Could not get address info")

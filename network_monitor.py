@@ -232,6 +232,7 @@ class InterfacePick(QDialog):
     
     def acceptInterfaceFn(self):
         self.idx = self.interfaceList.selectedIndexes()
-        self.interfaceName = self.idx[0].data().split('\t')[0].strip()        
+        self.interfaceName = self.idx[0].data().split('\t')[0].strip()
+        self.interfaceIP = self.idx[0].data().split('\t')[1].strip()
         self.close()
         

@@ -30,18 +30,22 @@ class TraceRoute(QWidget):
         if(len(self.host.text()) >= 1):
             try:
                 result, unans = traceroute(
-                    target=self.host.text(), dport=80, verbose=0)
+                    target=self.host.text(), dport=80, verbose=0, timeout=3)
                 output = []
                 output.append("\tRoute path\t\tResponse time")
                 result = sorted(result, key=lambda x: x[0].ttl)
 
+                prev_rcv_src = ''
                 for snd, rcv in result:
+                    if prev_rcv_src == rcv.src:
+                        break
                     output.append(
                         str("{}\t{}\t\t{} ms".format(
                             snd.ttl,
                             rcv.src,
                             (int((rcv.time - snd.sent_time)*1000))
                         )))
+                    prev_rcv_src = rcv.src
                 output.append("\nUnanswered packets: {}".format(
                     len(unans)
                 ))
