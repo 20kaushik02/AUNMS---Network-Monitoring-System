@@ -7,6 +7,7 @@ from scapy.all import *
 from ping import Ping
 from trace_route import TraceRoute
 from network_monitor import NetworkMonitor
+from network_devices import NetworkDevices
 
 class AUNMS(QWidget):
     def __init__(self):
@@ -24,6 +25,7 @@ class AUNMS(QWidget):
         self.tabwidget.addTab(NetworkMonitor(), "Network Monitor")
         self.tabwidget.addTab(TraceRoute(), "Trace Route")
         self.tabwidget.addTab(Ping(), "Ping")
+        self.tabwidget.addTab(NetworkDevices(), "Network Devices")
         
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.tabwidget)
