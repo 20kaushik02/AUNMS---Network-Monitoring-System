@@ -2,6 +2,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from scapy.all import *
+from scapy.layers.inet import IP, ICMP
 from network_monitor import InterfacePick
 
 
@@ -43,8 +44,8 @@ class NetworkDevices(QWidget):
 		self.tableWidget.setShowGrid(True)
 		self.tableWidget.setGridStyle(Qt.NoPen)
 		self.tableWidget.setRowCount(0)
-		self.tableWidget.setColumnCount(2)
-		self.tableWidget.setHorizontalHeaderLabels(["IP", "MAC"])
+		self.tableWidget.setColumnCount(3)
+		self.tableWidget.setHorizontalHeaderLabels(["IP", "MAC", "Status"])
 		self.tableWidget.horizontalHeader().setVisible(True)
 		self.tableWidget.horizontalHeader().setCascadingSectionResizes(True)
 		self.tableWidget.horizontalHeader().setHighlightSections(False)
@@ -80,6 +81,8 @@ class NetworkDevices(QWidget):
 			entry_ip = str(output[i], encoding='utf-8')
 			entry_mac = str(output[i+1], encoding='utf-8').replace("-",":")
 			
+			if entry_mac == "ff:ff:ff:ff:ff:ff":
+				continue
 			mul_addr = int(entry_ip.split('.')[0])
 			if mul_addr >= 224 and mul_addr < 240:
 				continue
@@ -87,14 +90,24 @@ class NetworkDevices(QWidget):
 			arpData = dict()
 			arpData['IP'] = entry_ip
 			arpData['MAC'] = entry_mac
+			arpData['Status'] = self.refreshStatus(entry_ip)
 
 			self.addArpToTableWidget(arpData)
 			
 	def addArpToTableWidget(self, arpData):
 		rowpos = self.tableWidget.rowCount()
 		self.tableWidget.insertRow(rowpos)
-		self.tableWidget.setItem(rowpos, 0, QTableWidgetItem(arpData['IP']))
-		self.tableWidget.setItem(rowpos, 1, QTableWidgetItem(arpData['MAC']))
+
+		ip_item = QTableWidgetItem(arpData['IP'])
+		ip_item.setTextAlignment(Qt.AlignCenter)
+		mac_item = QTableWidgetItem(arpData['MAC'])
+		mac_item.setTextAlignment(Qt.AlignCenter)
+		status_item = QTableWidgetItem(arpData['Status'])
+		status_item.setTextAlignment(Qt.AlignCenter)
+		
+		self.tableWidget.setItem(rowpos, 0, ip_item)
+		self.tableWidget.setItem(rowpos, 1, mac_item)
+		self.tableWidget.setItem(rowpos, 2, status_item)
 
 		self.vbar = self.tableWidget.verticalScrollBar()
 		self._scroll = self.vbar.value() == self.vbar.maximum()
@@ -105,3 +118,20 @@ class NetworkDevices(QWidget):
 		if hasattr(self.interfaceDiag, 'interfaceIP') and hasattr(self.interfaceDiag, 'interfaceName'):
 			self.networkIP = self.interfaceDiag.interfaceIP
 			self.interfbtn.setText(self.interfaceDiag.interfaceName)
+	
+	def refreshStatus(self, deviceIP):
+		try:
+			packet = IP(dst=deviceIP)/ICMP()
+			
+			status = 'Unresponsive'
+			for _ in range(3):
+				output = sr1(packet, timeout=2, verbose=0)
+				if output is not None:
+					if output.type is 0:
+						status = 'Reachable - {}ms'.format(
+							int((output.time - packet.sent_time)*1000)
+						)
+						break
+			return status
+		except socket.gaierror:
+			return 'Invalid address'
