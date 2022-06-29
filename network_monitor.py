@@ -170,20 +170,20 @@ class NetworkMonitor(QMainWindow):
             
     def savePacketsPCAP(self):
         path = QFileDialog.getSaveFileName(self, 'Save File', '', 'pcap(*.pcap)')
-        if path[0] is not '':
+        if path[0] != '':
             path = str(path[0])
             wrpcap(path, self.worker.packetList)
     
     def savePacketsBLIP(self):
         path = QFileDialog.getSaveFileName(self, 'Save File', '', 'pcap(*.pcap)')
-        if path[0] is not '':
+        if path[0] != '':
             path = str(path[0])
             wrpcap(path, self.worker.blackListAccess)
             self.worker.blackListAccess = []
     
     def savePacketsCSV(self):
         path = QFileDialog.getSaveFileName(self, 'Save File', '', 'CSV(*.csv)')
-        if path[0] is not '':
+        if path[0] != '':
             with open(path[0], 'w') as stream:
                 writer = csv.writer(stream, lineterminator='\n')
                 for row in range(self.tableWidget.rowCount()):
@@ -201,8 +201,8 @@ class InterfacePick(QDialog):
     def __init__(self, parent=None):
         super().__init__()
         self.setWindowTitle('Choose Interface to Monitor')
-        self.width = 400
-        self.height = 400
+        self.width = 600
+        self.height = 600
         
         self.setMinimumSize(self.width, self.height)
         
@@ -222,7 +222,7 @@ class InterfacePick(QDialog):
         for iface_name in sorted(ifaces.keys()):
             dev = ifaces[iface_name]
             mac = dev.mac
-            if iface_name != LOOPBACK_NAME:
+            if iface_name != conf.loopback_name:
                 mac = conf.manufdb._resolve_MAC(mac)
             
             if str(dev.ip) != "None" and not str(dev.name).startswith("VM"):
